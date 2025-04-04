@@ -6,13 +6,16 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from urllib.parse import urljoin
 
+import imghdr
+import shutil
+
 # 目标页面地址
-url = ""
+url = "https://www.wnacg.com/photos-slide-aid-294603.html"
 
 # 配置 Selenium 的 Chrome 选项（无界面模式）
 chrome_options = Options()
 chrome_options.add_argument("--headless")         # 无界面
-chrome_options.add_argument("--disable-gpu")        # 禁用 GPU
+chrome_options.add_argument("--disable-gpu")      # 禁用 GPU
 chrome_options.add_argument("--window-size=1920,1080")
 
 # 初始化 ChromeDriver（确保 chromedriver 在系统 PATH 或指定其路径）
@@ -60,15 +63,22 @@ for idx, img in enumerate(img_tags, start=1):
     img_url = urljoin(url, src)
     print(f"正在下载第 {idx} 张图片：{img_url}")
     try:
-        img_resp = requests.get(img_url, headers=headers)
-        if img_resp.status_code == 200:
-            # 提取扩展名，默认 .jpg
-            ext = os.path.splitext(img_url)[1] or ".jpg"
-            filename = os.path.join("images", f"{idx:03d}{ext}")
-            with open(filename, "wb") as f:
-                f.write(img_resp.content)
-        else:
-            print(f"下载第 {idx} 张图片失败，状态码：{img_resp.status_code}")
+        with requests.get(img_url, headers=headers, stream=True) as img_resp:
+            if img_resp.status_code == 200:
+                # 先读取部分内容以确定图片类型
+                img_data = img_resp.raw.read(32)
+                img_type = imghdr.what(None, h=img_data)
+                if img_type:
+                    ext = f".{img_type}"
+                else:
+                    ext = os.path.splitext(img_url)[1] or ".jpg"
+                filename = os.path.join("images", f"{idx:03d}{ext}")
+                # 将已读取的部分和剩余内容写入文件
+                with open(filename, "wb") as f:
+                    f.write(img_data)
+                    shutil.copyfileobj(img_resp.raw, f)
+            else:
+                print(f"下载第 {idx} 张图片失败，状态码：{img_resp.status_code}")
     except Exception as e:
         print(f"下载第 {idx} 张图片时发生异常：{e}")
 
