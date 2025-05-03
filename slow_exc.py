@@ -187,6 +187,7 @@ def extract_images_from_page(page_url):
 
 # 主函数
 def main():
+    global driver
     total_images = []
     
     try:
@@ -288,8 +289,11 @@ def main():
         print(f"所有图片下载完成! 共下载 {len(total_images)} 张图片。")
         
     finally:
+        try:
         # 确保浏览器关闭
-        driver.quit()
+            driver.quit()
+        except:
+            print("浏览器关闭失败或已关闭")
 
 if __name__ == "__main__":
     main()
