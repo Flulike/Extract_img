@@ -10,7 +10,7 @@ import imghdr
 import shutil
 
 # 目标页面地址
-url = "https://www.wnacg.com/photos-slide-aid-294603.html"
+url = ""
 
 # 配置 Selenium 的 Chrome 选项（无界面模式）
 chrome_options = Options()
