@@ -10,7 +10,7 @@ import imghdr
 import shutil
 
 # 目标页面地址
-url = ""
+url = " "
 
 # 配置 Selenium 的 Chrome 选项（无界面模式）
 chrome_options = Options()
@@ -24,23 +24,39 @@ driver = webdriver.Chrome(options=chrome_options)
 # 打开目标页面
 driver.get(url)
 
-# 等待 JS 动态加载，视具体情况可调整等待时间
-time.sleep(5)
+# 渐进式分段滚动，直到图片数量不再增加
+last_img_count = 0
+no_change_count = 0
+max_no_change = 3
+max_scroll_times = 10000
 
-# 如页面需要滚动加载动态内容，可以执行滚动操作
-driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-time.sleep(3)
+for i in range(max_scroll_times):
+    # 分段滚动到页面不同高度，模拟用户慢慢下滑
+    for scroll_position in [0.3, 0.6, 0.8, 1.0]:
+        driver.execute_script(f"window.scrollTo(0, document.body.scrollHeight * {scroll_position});")
+        time.sleep(1)
+    # 晃动滚动条，进一步触发懒加载
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight - 100);")
+    time.sleep(1)
+    driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+    time.sleep(2)
+    html = driver.page_source
+    soup = BeautifulSoup(html, "html.parser")
+    img_tags = soup.select("#img_list div img")
+    print(f"第{i+1}次滚动后，图片数：{len(img_tags)}")
+    if len(img_tags) == last_img_count:
+        no_change_count += 1
+        if no_change_count >= max_no_change:
+            print(f"连续{max_no_change}次图片数量未增加，停止滚动。")
+            break
+    else:
+        no_change_count = 0
+    last_img_count = len(img_tags)
 
-# 获取加载后的 HTML 源码
+# 最终获取所有图片标签
 html = driver.page_source
-
-# 关闭浏览器
 driver.quit()
-
-# 解析页面
 soup = BeautifulSoup(html, "html.parser")
-
-# 使用 CSS 选择器提取 id 为 img_list 区域内所有 div 下的 img 标签
 img_tags = soup.select("#img_list div img")
 print(f"共找到 {len(img_tags)} 张图片")
 

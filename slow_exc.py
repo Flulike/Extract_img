@@ -14,7 +14,7 @@ import imghdr
 import shutil
 
 # 目标页面地址
-url = ""
+url = " "
 
 # 配置 Selenium 的 Chrome 选项
 chrome_options = Options()
@@ -67,7 +67,7 @@ def extract_images_from_page(page_url):
     
     # 持续滚动直到页面高度不再变化（说明已到底部）
     scroll_attempts = 0
-    max_attempts = 10  # 增加最大尝试次数
+    max_attempts = 5  # 增加最大尝试次数
     
     print("开始渐进式滚动页面...")
     while scroll_attempts < max_attempts:
